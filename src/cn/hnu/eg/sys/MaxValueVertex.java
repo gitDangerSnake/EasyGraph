@@ -28,7 +28,7 @@ public class MaxValueVertex extends Vertex {
 			try {
 				Message msg = this.getMailbox().get();
 				if (msg != null) {
-					System.out.println(Task.getCurrentTask().id()+" said that I get a message and it's content is "+ msg.toString());
+					//System.out.println(Task.getCurrentTask().id()+" said that I get a message and it's content is "+ msg.toString());
 
 					if (msg.isDeath()) {
 						writeSolutions();
