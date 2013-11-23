@@ -8,16 +8,28 @@ import cn.hnu.eg.ds.Graph;
 import cn.hnu.eg.util.Signal;
 import cn.hnu.eg.util.State;
 
-public class Master extends Task{
-	
+public class Master extends Task {
+
 	private Mailbox<Signal> mailbox = new Mailbox<Signal>();
+	private Mailbox<Signal> stepbox = new Mailbox<Signal>();
 	private int numOfHalt = 0;
-	private Graph graph;
-	
-	
-	private Master(){
-		
+
+	public Mailbox<Signal> getStepbox() {
+		return stepbox;
 	}
+
+	public void setStepbox(Mailbox<Signal> stepbox) {
+		this.stepbox = stepbox;
+	}
+
+	private int numOfStepOver = 0;
+	private int tinyStep = 0;
+	private Graph graph;
+
+	private Master() {
+
+	}
+
 	public Mailbox<Signal> getMailbox() {
 		return mailbox;
 	}
@@ -34,6 +46,14 @@ public class Master extends Task{
 		this.numOfHalt = numOfHalt;
 	}
 
+	public int getTinyStep() {
+		return tinyStep;
+	}
+
+	public void setTinyStep(int tinyStep) {
+		this.tinyStep = tinyStep;
+	}
+
 	public Graph getGraph() {
 		return graph;
 	}
@@ -42,35 +62,66 @@ public class Master extends Task{
 		this.graph = graph;
 	}
 
-	public boolean isDone(){
+	public boolean isOver() throws Pausable {
+		Signal s = mailbox.getnb();
+		if (s == null) {
+			return false;
+		} else if (s.toString().equals("red")) {
+			numOfHalt -= 1;
+		} else {
+			numOfHalt += 1;
+		}
 		return numOfHalt == graph.size() ? true : false;
 	}
-	
-	@Override public void execute() throws Pausable{
-		
-		while(!isDone()){
-			Signal s = mailbox.get();
-			if(s.toString().equals("red")){
-				numOfHalt -= 1;
-			}else{
-				numOfHalt += 1;
+
+	@Override
+	public void execute() throws Pausable {
+		while (!isOver()) {
+			//System.out.println("I am working");
+			//System.out.println("This is step "+tinyStep);
+			if (tinyStep == 0) {
+				//System.out.println("I am going to sending message!");
+				sendOrders(tinyStep, State.START);
+				while (!isStepOver()) {
+				}
+				numOfStepOver = 0;
+				tinyStep++;
+			} else {
+				sendOrders(tinyStep, State.ACTIVE);
+				while (!isStepOver()) {
+				}
+				numOfStepOver = 0;
+				tinyStep++;
 			}
-			
-			//System.out.println(numOfHalt);
+			// System.out.println(numOfHalt);
 		}
 		System.out.println("OK, it's time to finish this!");
-		Message death = new InferiorMessage(State.DEATH);
-		for(Vertex v : graph.getListOfVertices()){
-			v.getMailbox().putnb(death);
+		SupervisorMessage death = new SupervisorMessage(State.DEATH);
+		for (Vertex v : graph.getListOfVertices()) {
+			v.getOrders().putnb(death);
 		}
 	}
-	
-	
-	public static class MasterHolder{
+
+	private boolean isStepOver() throws Pausable {
+		Signal s = stepbox.get();
+		if (s.toString().equals("green")) {
+			numOfStepOver += 1;
+		}
+		return numOfStepOver == graph.size() ? true : false;
+	}
+
+	public void sendOrders(int tinyStep, State state) {
+		for (Vertex v : graph.getListOfVertices()) {
+			//System.out.println("Sending message to " + v.toString());
+			v.getOrders().putnb(new SupervisorMessage(tinyStep, state));
+		}
+	}
+
+	public static class MasterHolder {
 		public static Master master = new Master();
 	}
-	
-	public static Master getMaster(){
+
+	public static Master getMaster() {
 		return MasterHolder.master;
 	}
 }

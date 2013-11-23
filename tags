@@ -1648,6 +1648,7 @@ successors	src/kilim/analysis/BasicBlock.java	/^    public ArrayList<BasicBlock>
 superClasses	src/kilim/analysis/AsmDetector.java	/^        LinkedList<String> superClasses = new LinkedList<String>();$/;"	f	class:AsmDetector.ClassCache
 superName	src/kilim/mirrors/CachedClassMirrors.java	/^    String superName;$/;"	f	class:CachedClassMirror
 superPattern	src/kilim/tools/Asm.java	/^    private static Pattern superPattern = Pattern.compile("\\\\.super (" + classNamePatternStr + ")$");$/;"	f	class:Asm	file:
+superstep	src/cn/hnu/eg/base/Vertex.java	/^	private int superstep = 0;$/;"	f	class:Vertex	file:
 suppressPausableCheck	src/kilim/analysis/MethodFlow.java	/^    private boolean suppressPausableCheck;$/;"	f	class:MethodFlow	file:
 swapRunnables	src/kilim/nio/NioSelectorScheduler.java	/^    synchronized RingQueue<Task> swapRunnables(RingQueue<Task> emptyRunnables) {$/;"	m	class:NioSelectorScheduler
 task	src/kilim/ExitMsg.java	/^    public final Task task; \/\/ exiting task$/;"	f	class:ExitMsg

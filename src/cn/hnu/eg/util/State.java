@@ -1,5 +1,5 @@
 package cn.hnu.eg.util;
 
 public enum State {
-	HALT,ACTIVE,DEATH	
+	START,HALT,ACTIVE,DEATH, 	
 };

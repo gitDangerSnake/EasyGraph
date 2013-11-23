@@ -3,81 +3,78 @@ package cn.hnu.eg.sys;
 import cn.hnu.eg.base.Vertex;
 import cn.hnu.eg.util.Signal;
 import cn.hnu.eg.util.State;
+import kilim.ExitMsg;
 import kilim.Mailbox;
 import kilim.Pausable;
 import kilim.Task;
 
-
 /**
  * @author dodoro
- * @date 2013-11-12
- * guidline : 
- *
+ * @date 2013-11-12 guidline :
+ * 
  */
 public class MaxValueVertex extends Vertex {
 
 	@Override
-	public void execute() throws Pausable {
-		int incoming_value ;			
-		for(Mailbox<Message> mb:this.getYellowBook()){
-			mb.putnb(new InferiorMessage(State.ACTIVE,this.getValue()));
-		}
+	public void execute() throws Pausable {	
+		//System.out.println(Task.getCurrentTask().id() + " is running.....");
 
-		//System.out.println(Task.getCurrentTask().id() + " is working now ...");
-		while (true) {
-			try {
-				Message msg = this.getMailbox().get();
-				if (msg != null) {
-					//System.out.println(Task.getCurrentTask().id()+" said that I get a message and it's content is "+ msg.toString());
-
-					if (msg.isDeath()) {
-						writeSolutions();
-						break;
-					}
-
-					if (!msg.isHalt()) {
-						if(this.getNowState() == State.HALT){
-							this.setNowState(State.ACTIVE);
-							Master.getMaster().getMailbox().putnb(Signal.red);
-						}
-						incoming_value = msg.toValue();
-						if (incoming_value > this.getValue()) {
-							this.setValue(incoming_value);
-														
-							for (Mailbox<Message> mb : getYellowBook()) {
-								mb.putnb(new InferiorMessage(State.ACTIVE,incoming_value));
-							}
-							
-						} else {
-							for (Mailbox<Message> mb : this.getYellowBook()) {
-								mb.putnb(new InferiorMessage(State.HALT));
-								//this.setNowState(State.HALT);
-								Master.getMaster().getMailbox().putnb(Signal.dark);
-							}
-						}
-						//msg = null;
-					} else if (msg.isHalt()
-							&& this.getNowState() == State.ACTIVE) {
+		while (true) {			
+			//get orders from master			
+			SupervisorMessage msg = this.getOrders().get();
+			if(msg.isStart()){//tinystep 0 send messages at will
+				for(Mailbox<Message> mb : getYellowBook()){
+					mb.put(new InferiorMessage(State.ACTIVE,getValue()));
+				}
+				
+				Master.getMaster().getStepbox().putnb(Signal.green);					
+				
+			}else if(msg.isDeath()){ // end compute
+				writeSolutions();break;
+			}else{//compute
+				int old_value = this.getValue();
+				while(this.getMailbox().hasMessage()){
+					Message amsg = this.getMailbox().get();
+					//System.out.println("got a message and it's value is " + amsg.toString());
+					if(amsg.isActive()){
+						this.setNowState(State.ACTIVE);
+						if(this.getValue() < amsg.toValue())
+							this.setValue(amsg.toValue());
+					}else if(this.getNowState() == State.ACTIVE && amsg.isHalt()){
 						this.setNowState(State.HALT);
-						Master.getMaster().getMailbox().putnb(Signal.dark);
-						//msg = null;
+					}
+				}
+				
+				
+				//send message among its adj vertices
+				if(this.getValue() != old_value){
+					for(Mailbox<Message> mb : getYellowBook()){
+						mb.put(new InferiorMessage(State.ACTIVE,getValue()));
 					}
 				}else{
-					System.out.println("sorry, there is no message for you now....");
+					for(Mailbox<Message> mb : getYellowBook()){
+						mb.put(new InferiorMessage(State.HALT));
+					}
 				}
-				msg = null;
 				
-				//System.gc();
-			} catch (Pausable e) {
-				e.printStackTrace();
+				//report to master with two messages
+				//1. its state 2.mission over
+				
+				Master.getMaster().getMailbox().putnb(this.getNowState() == State.ACTIVE ? Signal.red : Signal.dark);
+				Master.getMaster().getStepbox().putnb(Signal.green);
+				
 			}
-
+			
 		}
 
+		//this.informOnExit(this.getExitmb());
+
+		//Task.exit(0);
 	}
 
 	private void writeSolutions() throws Pausable {
-		System.out.println(Task.getCurrentTask().id()+" : "+this.getValue());
+		System.out
+				.println(Task.getCurrentTask().id() + " : " + this.getValue());
 	}
 
 }

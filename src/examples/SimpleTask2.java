@@ -29,8 +29,9 @@ public class SimpleTask2 extends Task {
         mb.putnb("World\n");
         mb.putnb("done");
         
-        exitmb.getb();
-        System.exit(0);
+        ExitMsg em = exitmb.getb();
+        System.out.println(em);
+        //System.exit(0);
     }
 
     /**

@@ -6,6 +6,8 @@ import cn.hnu.eg.util.State;
 
 public class InferiorMessage implements Message , Serializable{
 	
+	
+	private static final long serialVersionUID = 1L;
 	private int value ;
 	private State state;
 	

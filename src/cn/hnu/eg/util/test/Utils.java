@@ -10,6 +10,8 @@ import java.io.ObjectOutputStream;
 /**
  * 
  * @version $Revision: 1.0 $ $Date:$
+ public void init(String vertexClassName,String filename){
+  76 ^Ipublic void init(String vertexClassName,String filename){
  * @author Yuriy Stepovoy. <ahref="mailto:stepovoy@gmail.com">stepovoy@gmail.com</a>
  **/
 

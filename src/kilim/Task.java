@@ -152,7 +152,7 @@ public abstract class Task implements EventSubscriber {
         resume();
     }
     /**
-     * Add itself to scheduler if it is neither already running nor done.
+     * Add itself to scheduler if it is neither already running nor .
      * @return True if it scheduled itself.
      */
     public boolean resume() {

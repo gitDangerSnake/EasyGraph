@@ -11,10 +11,14 @@ public class Service {
 		Master master = Master.getMaster();
 		master.setGraph(graph);
 		
-		master.start();
+		
+		System.out.println("now start vertices");
 		for(Vertex v : graph.getListOfVertices()){
 			v.start();
 		}
+		
+		System.out.println("now start master");
+		master.start();
 		
 	}
 

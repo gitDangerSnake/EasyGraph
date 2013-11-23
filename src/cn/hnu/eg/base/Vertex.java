@@ -4,7 +4,9 @@ import java.util.LinkedList;
 import java.util.List;
 
 import cn.hnu.eg.sys.Message;
+import cn.hnu.eg.sys.SupervisorMessage;
 import cn.hnu.eg.util.State;
+import kilim.ExitMsg;
 import kilim.Mailbox;
 import kilim.Pausable;
 import kilim.Task;
@@ -17,16 +19,24 @@ import kilim.Task;
  */
 public abstract class Vertex extends Task {
 	
-	private Mailbox<Message> mailbox = new Mailbox<Message>();
+	/*
+	 * receive messages from master
+	 * */
+	private Mailbox<SupervisorMessage> orders = new Mailbox<SupervisorMessage>(); 	
 	
+	
+	private Mailbox<Message> mailbox = new Mailbox<Message>();
+	private Mailbox<ExitMsg> exitmb = new Mailbox<ExitMsg>();
 	private int v_id;
 	private int value;
+	private int superstep = 0;
 	private List<Mailbox<Message>> yellowBook = new LinkedList<Mailbox<Message>>();
 	private State nowState = State.ACTIVE;
 	
 	public void init(int vid,int value){
 		this.v_id = vid;
 		this.value = value;
+		this.superstep = 0;
 	}
 	public Mailbox<Message> getMailbox() {
 		return mailbox;
@@ -34,6 +44,13 @@ public abstract class Vertex extends Task {
 
 	public void setMailbox(Mailbox<Message> mailbox) {
 		this.mailbox = mailbox;
+	}
+	
+	public Mailbox<ExitMsg> getExitmb() {
+		return exitmb;
+	}
+	public void setExitmb(Mailbox<ExitMsg> exitmb) {
+		this.exitmb = exitmb;
 	}
 
 	public int getV_id() {
@@ -47,6 +64,14 @@ public abstract class Vertex extends Task {
 	public int getValue() {
 		return value;
 	}
+
+  public void setSuperstep(int superstep){
+   this.superstep = superstep; 
+  }
+
+  public int getSuperstep(){
+    return superstep;
+  }
 
 	public void setValue(int value) {
 		this.value = value;
@@ -74,4 +99,12 @@ public abstract class Vertex extends Task {
 	@Override public String toString(){
 		return v_id + ":"+ value;
 	}
+	
+	public Mailbox<SupervisorMessage> getOrders() {
+		return orders;
+	}
+	public void setOrders(Mailbox<SupervisorMessage> orders) {
+		this.orders = orders;
+	}
+	
 }
