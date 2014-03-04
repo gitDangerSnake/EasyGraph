@@ -6,12 +6,11 @@ import cn.hnu.eg.util.State;
 
 public class SupervisorMessage implements Message , Serializable {
 	
-	
 	private static final long serialVersionUID = -173674230888539334L;
-	private int value;
+	private double value;
 	private State state;
 
-	public SupervisorMessage(int value, State state) {
+	public SupervisorMessage(double value, State state) {
 		super();
 		this.value = value;
 		this.state = state;
@@ -19,11 +18,11 @@ public class SupervisorMessage implements Message , Serializable {
 
 	public SupervisorMessage(State death) {
 		state = State.DEATH;
-		value = -1;
+		
 	}
 
 	@Override
-	public int toValue() {		
+	public double toValue() {		
 		return value;
 	}
 

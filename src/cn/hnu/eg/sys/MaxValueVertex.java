@@ -1,5 +1,6 @@
 package cn.hnu.eg.sys;
 
+import cn.hnu.eg.base.BaseVertex;
 import cn.hnu.eg.base.Vertex;
 import cn.hnu.eg.util.Signal;
 import cn.hnu.eg.util.State;
@@ -13,43 +14,44 @@ import kilim.Task;
  * @date 2013-11-12 guidline :
  * 
  */
-public class MaxValueVertex extends Vertex {
+public class MaxValueVertex extends BaseVertex {
 
 	@Override
 	public void execute() throws Pausable {	
 		//System.out.println(Task.getCurrentTask().id() + " is running.....");
 
-		while (true) {			
+		while (this.getMailbox().hasMessage()) {		
 			//get orders from master			
-			SupervisorMessage msg = this.getOrders().get();
+			SupervisorMessage msg = (SupervisorMessage) this.getOrders().get();
 			if(msg.isStart()){//tinystep 0 send messages at will
-				for(Mailbox<Message> mb : getYellowBook()){
+				/*for(Mailbox<Message> mb : getYellowBook()){
 					mb.put(new InferiorMessage(State.ACTIVE,getValue()));
-				}
+				}*/
+				this.send();
 				
 				Master.getMaster().getStepbox().putnb(Signal.green);					
 				
 			}else if(msg.isDeath()){ // end compute
 				writeSolutions();break;
 			}else{//compute
-				int old_value = this.getValue();
+				double old_value = this.getVal();
 				while(this.getMailbox().hasMessage()){
 					Message amsg = this.getMailbox().get();
 					//System.out.println("got a message and it's value is " + amsg.toString());
 					if(amsg.isActive()){
-						this.setNowState(State.ACTIVE);
-						if(this.getValue() < amsg.toValue())
-							this.setValue(amsg.toValue());
-					}else if(this.getNowState() == State.ACTIVE && amsg.isHalt()){
-						this.setNowState(State.HALT);
+						this.setCurrentstate(State.ACTIVE);
+						if(this.getVal() < amsg.toValue())
+							this.setVal(amsg.toValue());
+					}else if(this.getCurrentstate() == State.ACTIVE && amsg.isHalt()){
+						this.setCurrentstate(State.HALT);
 					}
 				}
 				
 				
 				//send message among its adj vertices
-				if(this.getValue() != old_value){
+				if(this.getVal() != old_value){
 					for(Mailbox<Message> mb : getYellowBook()){
-						mb.put(new InferiorMessage(State.ACTIVE,getValue()));
+						mb.put(new InferiorMessage(State.ACTIVE,getVal()));
 					}
 				}else{
 					for(Mailbox<Message> mb : getYellowBook()){
@@ -60,12 +62,15 @@ public class MaxValueVertex extends Vertex {
 				//report to master with two messages
 				//1. its state 2.mission over
 				
-				Master.getMaster().getMailbox().putnb(this.getNowState() == State.ACTIVE ? Signal.red : Signal.dark);
+				Master.getMaster().getMailbox().putnb(this.getCurrentstate() == State.ACTIVE ? Signal.red : Signal.dark);
 				Master.getMaster().getStepbox().putnb(Signal.green);
 				
 			}
 			
 		}
+		
+		//processing exit transaction
+		
 
 		//this.informOnExit(this.getExitmb());
 
@@ -74,7 +79,13 @@ public class MaxValueVertex extends Vertex {
 
 	private void writeSolutions() throws Pausable {
 		System.out
-				.println(Task.getCurrentTask().id() + " : " + this.getValue());
+				.println(Task.getCurrentTask().id() + " : " + this.getVal());
+	}
+
+	@Override
+	public void compute() {
+		// TODO Auto-generated method stub
+		
 	}
 
 }

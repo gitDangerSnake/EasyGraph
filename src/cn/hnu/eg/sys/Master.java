@@ -3,7 +3,6 @@ package cn.hnu.eg.sys;
 import kilim.Mailbox;
 import kilim.Pausable;
 import kilim.Task;
-import cn.hnu.eg.base.Vertex;
 import cn.hnu.eg.ds.Graph;
 import cn.hnu.eg.util.Signal;
 import cn.hnu.eg.util.State;
@@ -96,9 +95,11 @@ public class Master extends Task {
 			// System.out.println(numOfHalt);
 		}
 		System.out.println("OK, it's time to finish this!");
-		SupervisorMessage death = new SupervisorMessage(State.DEATH);
-		for (Vertex v : graph.getListOfVertices()) {
-			v.getOrders().putnb(death);
+		SupervisorMessage death = new SupervisorMessage(State.DEATH);		
+		
+		for (Integer i : graph.getChunk().asMap().keySet()) {
+			graph.getChunk().asMap().get(i).getOrders()
+					.putnb(death);
 		}
 	}
 
@@ -111,13 +112,14 @@ public class Master extends Task {
 	}
 
 	public void sendOrders(int tinyStep, State state) {
-		for (Vertex v : graph.getListOfVertices()) {
-			//System.out.println("Sending message to " + v.toString());
-			v.getOrders().putnb(new SupervisorMessage(tinyStep, state));
+
+		for (Integer i : graph.getChunk().asMap().keySet()) {
+			graph.getChunk().asMap().get(i).getOrders()
+					.putnb(new SupervisorMessage(tinyStep, state));
 		}
 	}
 
-	public static class MasterHolder {
+	private static class MasterHolder {
 		public static Master master = new Master();
 	}
 

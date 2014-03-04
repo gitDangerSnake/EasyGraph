@@ -7,6 +7,8 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutput;
 import java.io.ObjectOutputStream;
 
+import org.junit.Test;
+
 /**
  * 
  * @version $Revision: 1.0 $ $Date:$
@@ -56,5 +58,15 @@ public class Utils {
   ByteArrayInputStream inbuf = new ByteArrayInputStream(outbuf.toByteArray());
   ObjectInput in = new ObjectInputStream(inbuf);
   return in.readObject();
+ }
+ 
+ @Test
+ public void test(){
+	 String s = "3->4->5->6";
+	 String[] ss = s.split("->");
+	 for (String string : ss) {
+		 System.out.println(string);
+	}
+	 
  }
 }

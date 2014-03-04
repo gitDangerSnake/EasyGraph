@@ -6,41 +6,38 @@ import cn.hnu.eg.util.State;
 
 public class InferiorMessage implements Message , Serializable{
 	
-	
-	private static final long serialVersionUID = 1L;
-	private int value ;
+	private static final long serialVersionUID = 8203433086620056073L;
+	private double value ;
 	private State state;
 	
 	public InferiorMessage(){
 		
 	}
 	
-	public InferiorMessage(State state,int value){
+	public InferiorMessage(State state,double value){
 		this.state = state;	
 		this.value = value;
 	}
 	
 	public InferiorMessage(State state){
 		this.state = state;
-		this.value = Integer.MAX_VALUE;
+		this.value = Double.MIN_VALUE;
 	}
 	
-	@Override
-	public int toValue() {
+	public double toValue() {
 		return value;
 	}	
 
-	@Override
+	
 	public boolean isHalt() {		
 		return this.state == State.HALT ? true : false;
 	}
 
-	@Override
 	public boolean isActive() {
 		return this.state == State.ACTIVE ? true : false;
 	}
 
-	@Override
+	
 	public boolean isDeath() {
 		return this.state == State.DEATH ? true : false;		
 	}

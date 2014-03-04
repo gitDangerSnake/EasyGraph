@@ -1,30 +1,28 @@
 package cn.hnu.eg.ds;
 
-import java.util.LinkedList;
-import java.util.List;
 import java.io.*;
 
-import kilim.Mailbox;
+import cn.hnu.eg.Exceptions.IllegalDataException;
 import cn.hnu.eg.base.*;
-import cn.hnu.eg.sys.Message;
-import cn.hnu.eg.util.EasyGraphConstant;
-
+import cn.hnu.eg.cache.Chunk;
 
 /**
  * @author dodoro
- * @date 2013-11-11
- * Graph maintains the basic data structure of the graph 
+ * @date 2013-11-11 Graph maintains the basic data structure of the graph
  */
 public class Graph {
 
 	private String filename;
-	private List<Vertex> listOfVertices;	
+	//private List<BaseVertex> listOfVertices;
 	private String vertexClassName;
 	private int numOfVertices;
-	
-	public Graph(String vertexClassName,String filename){
-		init(vertexClassName, filename);
+	private Chunk<Integer, BaseVertex> chunk = Chunk.getChunk();
+
+	public Graph(String vertexClassName, String filename,
+			String idSperatorValue, String idSperatorId) {
+		init(vertexClassName, filename, idSperatorValue, idSperatorId);
 	}
+
 	public String getFilename() {
 		return filename;
 	}
@@ -33,13 +31,15 @@ public class Graph {
 		this.filename = filename;
 	}
 
-	public List<Vertex> getListOfVertices() {
-		return listOfVertices;
-	}
-
-	public void setListOfVertices(List<Vertex> listOfVertices) {
-		this.listOfVertices = listOfVertices;
-	}
+	/*
+		public List<BaseVertex> getListOfVertices() {
+			return listOfVertices;
+		}
+	
+		public void setListOfVertices(List<BaseVertex> listOfVertices) {
+			this.listOfVertices = listOfVertices;
+		}
+	*/
 
 	public String getVertexClassName() {
 		return vertexClassName;
@@ -48,35 +48,39 @@ public class Graph {
 	public void setVertexClassName(String vertexClassName) {
 		this.vertexClassName = vertexClassName;
 	}
-	
-	public int getNumOfVertices() {
-		return numOfVertices;
+
+	public Chunk<Integer, BaseVertex> getChunk(){
+		return chunk;
 	}
 
 	public void setNumOfVertices(int numOfVertices) {
 		this.numOfVertices = numOfVertices;
 	}
-
+	public int size() {
+		return numOfVertices;
+	}
 
 	/*
-	 * file format:
-	 * 1.number of vertices
-	 * 2.vertices with values, one vertex per line like vertex_id : vertex_value
-	 * 3.Edges between vertices v_id -> v_id
+	 * file format: 1.number of vertices 2.vertices with values, one vertex per
+	 * line like vertex_id : vertex_value 3.Edges between vertices v_id -> v_id
+	 * : @weight
 	 * 
 	 * @param vertexClassName specify the subclass file of Vertex
+	 * 
 	 * @param filename specify the location of the graph data file
 	 * 
 	 * @function : load the graph from disk into main memory
 	 * 
 	 * @author : dodoro
+	 * 
 	 * @date : 2013-11-11
-	 * */	
-	
-	public void init(String vertexClassName,String filename){
+	 */
+
+	public void init(String vertexClassName, String filename,
+			String idSperatorValue, String idSperatorId) {
 		this.setFilename(filename);
 		this.setVertexClassName(vertexClassName);
-		listOfVertices = new LinkedList<Vertex>();
+		//listOfVertices = new LinkedList<BaseVertex>();
 		BufferedReader buffer = null;
 		try {
 			buffer = new BufferedReader(new FileReader(filename));
@@ -84,53 +88,31 @@ public class Graph {
 			this.setNumOfVertices(numOfVertices);
 			String line = null;
 			int count = 0;
-			while((line=buffer.readLine())!=null && count != numOfVertices){
-				Vertex v = (Vertex) Class.forName(vertexClassName).newInstance();
-				String[] elems = line.split(EasyGraphConstant.idSperatorValue);
-				int v_id = Integer.valueOf(elems[0]);
-				int v_val = Integer.valueOf(elems[1]);
-				v.init(v_id, v_val);
-				listOfVertices.add(v);
+			while ((line = buffer.readLine()) != null && count != numOfVertices) {
+				BaseVertex v = (BaseVertex) Class.forName(vertexClassName)
+						.newInstance();
+				v.init(line, idSperatorId, idSperatorValue, false);
+				//listOfVertices.add(v);
+				chunk.put(v.getId(), v);
 				count++;
 			}
-			
-			for(Vertex v : listOfVertices){
-				System.out.println(v.toString());
-			}
-			
-			while((line=buffer.readLine())!=null){				
-				String[] edgeElems = line.split(EasyGraphConstant.idSperatorId);
-				int s_id = Integer.valueOf(edgeElems[0]);
-				int e_id = Integer.valueOf(edgeElems[1]);
-				
-				listOfVertices.get(s_id).getYellowBook().add(listOfVertices.get(e_id).getMailbox());
-				/*
-				Mailbox<Message> tmp_mailbox = listOfVertices.get(e_id).getMailbox();
-				assert(tmp_mailbox!=null);
-				System.out.println(tmp_mailbox);
-				List<Mailbox<Message>> tmp_yellowbook = listOfVertices.get(s_id).getYellowBook();
-				assert(tmp_yellowbook!=null);
-				System.out.println(tmp_yellowbook);
-				tmp_yellowbook.add(tmp_mailbox);
-				*/
-			}
-		} catch (NumberFormatException | IOException | InstantiationException | IllegalAccessException | ClassNotFoundException e) {			
+
+		} catch (NumberFormatException | IOException | InstantiationException
+				| IllegalAccessException | ClassNotFoundException
+				| IllegalDataException e) {
 			e.printStackTrace();
-		}finally{
+		} finally {
 			try {
 				buffer.close();
-			} catch (IOException e) {				
+			} catch (IOException e) {
 				e.printStackTrace();
 			}
-			if(buffer!=null){
+			if (buffer != null) {
 				buffer = null;
 			}
 		}
 	}
-	
 
-	public int size() {		
-		return numOfVertices;
-	}
+	
 
 }

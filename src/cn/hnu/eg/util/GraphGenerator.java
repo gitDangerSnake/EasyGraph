@@ -46,7 +46,7 @@ public class GraphGenerator {
 					} else if (numOfVertices == 3) {
 						numOfOutgoingEdges = new Random().nextInt(numOfVertices - 2) + 1;
 					} else {
-						numOfOutgoingEdges = new Random().nextInt(numOfVertices / 5) + 1;
+						numOfOutgoingEdges = new Random().nextInt(numOfVertices / 20) + 1;
 					}
 				}
 				
