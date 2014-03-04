@@ -8,6 +8,7 @@ import cn.hnu.eg.sys.InferiorMessage;
 import cn.hnu.eg.sys.Master;
 import cn.hnu.eg.sys.Message;
 import cn.hnu.eg.sys.SupervisorMessage;
+import cn.hnu.eg.util.Rule;
 import cn.hnu.eg.util.Signal;
 import cn.hnu.eg.util.State;
 import cn.hnu.eg.Exceptions.IllegalDataException;
@@ -18,12 +19,11 @@ import kilim.Mailbox;
 import kilim.Pausable;
 import kilim.Task;
 
-public abstract class BaseVertex extends Task implements
-		Serializable {
+public abstract class BaseVertex extends Task implements Serializable {
 
 	private static final long serialVersionUID = -6236420676620350939L;
 	private Mailbox<Message> mailbox = new Mailbox<Message>(100);
-	private Mailbox<Message> orders = new Mailbox<Message>(10); 
+	private Mailbox<Message> orders = new Mailbox<Message>(10);
 	private Mailbox<ExitMsg> exitmb = new Mailbox<ExitMsg>();
 	private int id;
 	private double val;
@@ -31,7 +31,7 @@ public abstract class BaseVertex extends Task implements
 	private List<Edge> adjs = new LinkedList<Edge>();
 	private State currentstate = State.ACTIVE;
 	private Message msg = null;
-	private Chunk<Integer,BaseVertex> chunk;
+	private Chunk<Integer, BaseVertex> chunk;
 	private StringBuffer sb = new StringBuffer();
 
 	public Mailbox<Message> getMailbox() {
@@ -102,7 +102,7 @@ public abstract class BaseVertex extends Task implements
 				throw new IllegalDataException("vertex id cannot be negative");
 			}
 			init(Integer.valueOf(currentContent[0]),
-					 Double.valueOf(currentContent[1]));
+					Double.valueOf(currentContent[1]));
 
 		} else {
 
@@ -139,16 +139,17 @@ public abstract class BaseVertex extends Task implements
 	// to program correctly
 	public abstract void compute();
 
+	@Override
 	public void execute() throws Pausable {
 		SupervisorMessage msg = null;
 		boolean running = false;
-		msg = (SupervisorMessage)orders.get();
+		msg = (SupervisorMessage) orders.get();
 		if (msg.isStart())
 			running = true;
 
 		while (running) {
 			while (mailbox.hasMessage()) {
-				msg = (SupervisorMessage)orders.get();
+				msg = (SupervisorMessage) orders.get();
 				if (!msg.isStart()) {
 					compute();
 				} else if (msg.isDeath()) {
@@ -164,17 +165,32 @@ public abstract class BaseVertex extends Task implements
 		}
 	}
 
+	
+
+	public void send(Rule rule) throws Pausable {
+		switch(rule){
+		case valuechange : send() ; break;
+		case outboundschange : ; break;
+		case inboundschange : ; break;
+		case weightchange:	;break;
+		}
+	}
+	
+	//*** once value in this vertex changed , then send message to its adjs
 	public void generateMsg() {
 		this.msg = new InferiorMessage(currentstate, val);
 	}
-
 	public void send() throws Pausable {
+
 		generateMsg();
 		for (Edge e : adjs) {
 			int d_id = e.getD_id();
 			chunk.send(msg, d_id);
 		}
 	}
+	
+	//*** once its outbounds changed , then send message to its adjs
+	//public void generateMsg()
 
 	public void writeSolution() {
 

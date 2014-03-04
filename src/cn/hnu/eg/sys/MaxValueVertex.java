@@ -2,6 +2,7 @@ package cn.hnu.eg.sys;
 
 import cn.hnu.eg.base.BaseVertex;
 import cn.hnu.eg.base.Vertex;
+import cn.hnu.eg.util.Rule;
 import cn.hnu.eg.util.Signal;
 import cn.hnu.eg.util.State;
 import kilim.ExitMsg;
@@ -49,7 +50,7 @@ public class MaxValueVertex extends BaseVertex {
 				
 				
 				//send message among its adj vertices
-				if(this.getVal() != old_value){
+				/*if(this.getVal() != old_value){
 					for(Mailbox<Message> mb : getYellowBook()){
 						mb.put(new InferiorMessage(State.ACTIVE,getVal()));
 					}
@@ -57,7 +58,10 @@ public class MaxValueVertex extends BaseVertex {
 					for(Mailbox<Message> mb : getYellowBook()){
 						mb.put(new InferiorMessage(State.HALT));
 					}
-				}
+				}*/
+				
+				send(Rule.valuechange);
+				
 				
 				//report to master with two messages
 				//1. its state 2.mission over

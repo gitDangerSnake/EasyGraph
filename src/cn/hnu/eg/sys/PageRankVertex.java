@@ -19,4 +19,10 @@ public class PageRankVertex extends Vertex {
 		System.out.println(Task.getCurrentTask().id() + " : " + this.getValue());
 
 	}
+
+	@Override
+	public void compute() {
+		// TODO 自动生成的方法存根
+		
+	}
 }
