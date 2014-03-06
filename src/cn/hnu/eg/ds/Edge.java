@@ -1,8 +1,6 @@
 package cn.hnu.eg.ds;
 
-import kilim.Mailbox;
-import cn.hnu.eg.sys.Message;
-import cn.hnu.eg.util.EasyGraphConstant;
+import cn.hnu.eg.util.EGConstant;
 
 public class Edge {
 	private int s_id; // id of the source vertex
@@ -76,8 +74,8 @@ public class Edge {
 	 * */
 	@Override
 	public String toString() {
-		return s_id + EasyGraphConstant.idSperatorId + d_id + " "
-				+ EasyGraphConstant.idSperatorValue + weight;
+		return s_id + EGConstant.idSperatorId + d_id + " "
+				+ EGConstant.idSperatorValue + weight;
 	}
 
 }

@@ -29,13 +29,13 @@ public class GraphGenerator {
 		
 		BufferedWriter buffer = null;
 		try {
-			buffer = new BufferedWriter(new FileWriter(EasyGraphConstant.GraphFilePath));
+			buffer = new BufferedWriter(new FileWriter(EGConstant.GraphFilePath));
 			
 			StringBuffer sb = new StringBuffer();
 			sb.append(numOfVertices).append("\n");
 			for(int i=0;i<numOfVertices;i++){
 				int value = new Random().nextInt(maxValue);
-				sb.append(i).append(EasyGraphConstant.idSperatorValue).append(value).append("\n");
+				sb.append(i).append(EGConstant.idSperatorValue).append(value).append("\n");
 			}
 			for(int i=0;i<numOfVertices;i++){
 				existingDest.clear();
@@ -61,7 +61,7 @@ public class GraphGenerator {
 					}
 					if (count < 5) {
 						existingDest.add(destVertex);
-						sb.append(i).append(EasyGraphConstant.idSperatorId).append(destVertex).append("\n");
+						sb.append(i).append(EGConstant.idSperatorId).append(destVertex).append("\n");
 						destVertex = -1;
 
 					}

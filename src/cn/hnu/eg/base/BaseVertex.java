@@ -22,18 +22,42 @@ import kilim.Task;
 public abstract class BaseVertex extends Task implements Serializable {
 
 	private static final long serialVersionUID = -6236420676620350939L;
+
+	// 接收来自其他顶点的消息
 	private Mailbox<Message> mailbox = new Mailbox<Message>(100);
+	// 接收来自Master的控制信息
 	private Mailbox<Message> orders = new Mailbox<Message>(10);
+	// 退出消息
 	private Mailbox<ExitMsg> exitmb = new Mailbox<ExitMsg>();
+
+	// 当前顶点的标识
 	private int id;
+
+	// 保存顶点在某次迭代上一次的值
+	private double old_val;
+
+	// 顶点当前的值
 	private double val;
+
+	// 超级步
 	private int superstep = 0;
+
+	// 邻接表
 	private List<Edge> adjs = new LinkedList<Edge>();
+
+	// 当前顶点的状态
 	private State currentstate = State.ACTIVE;
+
+	// 消息
 	private Message msg = null;
+
+	// 当前顶点所在的块
 	private Chunk<Integer, BaseVertex> chunk;
+
+	// .......
 	private StringBuffer sb = new StringBuffer();
 
+	/** getters / setters */
 	public Mailbox<Message> getMailbox() {
 		return mailbox;
 	}
@@ -55,6 +79,7 @@ public abstract class BaseVertex extends Task implements Serializable {
 	}
 
 	public void setVal(double val) {
+		this.old_val = this.val;
 		this.val = val;
 	}
 
@@ -82,9 +107,13 @@ public abstract class BaseVertex extends Task implements Serializable {
 		this.currentstate = state;
 	}
 
+	// end of getter and setter
+
+	// 初始化顶点
 	public void init(int id, double val) {
 		this.id = id;
 		this.val = val;
+		this.old_val = this.val;
 	}
 
 	public void init(int id) {
@@ -144,20 +173,22 @@ public abstract class BaseVertex extends Task implements Serializable {
 		SupervisorMessage msg = null;
 		boolean running = false;
 		msg = (SupervisorMessage) orders.get();
-		if (msg.isStart())
+		if (msg.isStart()) {
 			running = true;
+			send();
+		}
 
 		while (running) {
 			while (mailbox.hasMessage()) {
-				msg = (SupervisorMessage) orders.get();
-				if (!msg.isStart()) {
-					compute();
-				} else if (msg.isDeath()) {
-					running = false;
-					break;
-				} else {
-					send();
+				Object obj = orders.getnb(); // getnb() 非阻塞，返回消息或者null
+				if (obj != null) {
+					msg = (SupervisorMessage) obj;
+					if (msg.isDeath()) {
+						running = false;
+						break;
+					}
 				}
+				compute();
 			}
 			currentstate = State.HALT;
 			Master.getMaster().getMailbox().putnb(Signal.dark);
@@ -165,21 +196,25 @@ public abstract class BaseVertex extends Task implements Serializable {
 		}
 	}
 
-	
-
 	public void send(Rule rule) throws Pausable {
-		switch(rule){
-		case valuechange : send() ; break;
-		case outboundschange : ; break;
-		case inboundschange : ; break;
-		case weightchange:	;break;
+		switch (rule) {
+		case valuechange:
+			send();
+			break;
+		case outboundschange:
+			;
+			break;
+		case weightchange:
+			;
+			break;
 		}
 	}
-	
-	//*** once value in this vertex changed , then send message to its adjs
+
+	// *** once value in this vertex changed , then send message to its adjs
 	public void generateMsg() {
 		this.msg = new InferiorMessage(currentstate, val);
 	}
+
 	public void send() throws Pausable {
 
 		generateMsg();
@@ -188,9 +223,9 @@ public abstract class BaseVertex extends Task implements Serializable {
 			chunk.send(msg, d_id);
 		}
 	}
-	
-	//*** once its outbounds changed , then send message to its adjs
-	//public void generateMsg()
+
+	// *** once its outbounds changed , then send message to its adjs
+	// public void generateMsg()
 
 	public void writeSolution() {
 

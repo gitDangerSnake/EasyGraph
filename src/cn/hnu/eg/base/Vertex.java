@@ -11,7 +11,7 @@ import cn.hnu.eg.sys.InferiorMessage;
 import cn.hnu.eg.sys.Master;
 import cn.hnu.eg.sys.Message;
 import cn.hnu.eg.sys.SupervisorMessage;
-import cn.hnu.eg.util.EasyGraphConstant;
+import cn.hnu.eg.util.EGConstant;
 import cn.hnu.eg.util.Signal;
 import cn.hnu.eg.util.State;
 import kilim.ExitMsg;
@@ -111,14 +111,14 @@ public abstract class Vertex<T extends Number> extends Task implements Serializa
 		 * current vertex's id and value the rest parts of the array are used to
 		 * init the adjs
 		 * */
-		String[] vcontent = str.split(EasyGraphConstant.idSperatorId);
+		String[] vcontent = str.split(EGConstant.idSperatorId);
 
 		String[] currentContent;
 
 		// if the first part contains id:value
 		if (vcontent[0].contains(":")) {
 			currentContent = vcontent[0]
-					.split(EasyGraphConstant.idSperatorValue);
+					.split(EGConstant.idSperatorValue);
 			if (Integer.valueOf(currentContent[0]) < 0)
 				throw new IllegalDataException("Id can't be negative");
 			// TO DO : data adapter
@@ -133,9 +133,9 @@ public abstract class Vertex<T extends Number> extends Task implements Serializa
 		// init the adj edges
 		Edge e = null;
 		for (int i = 1; i < vcontent.length; i++) {
-			if (vcontent[i].contains(EasyGraphConstant.idSperatorValue)) {
+			if (vcontent[i].contains(EGConstant.idSperatorValue)) {
 				currentContent = vcontent[i]
-						.split(EasyGraphConstant.idSperatorValue);
+						.split(EGConstant.idSperatorValue);
 				if (Integer.valueOf(currentContent[0]) < 0)
 					throw new IllegalDataException("Id can't be negative");
 				e = new Edge(this.v_id, Integer.valueOf(currentContent[0]),
