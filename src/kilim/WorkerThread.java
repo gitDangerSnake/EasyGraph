@@ -29,6 +29,7 @@ public class WorkerThread extends Thread {
             while (true) {
                 Task t = getNextTask(this); // blocks until task available
                 runningTask = t;
+                //System.out.println(t);
                 t._runExecute(this);
                 runningTask = null;
             }
@@ -50,7 +51,7 @@ public class WorkerThread extends Thread {
             if (scheduler.isShutdown())
                 throw new ShutdownException();
 
-            t = getNextTask();
+            t = getNextTask(); // tasks.get()
             if (t != null)
                 break;
 

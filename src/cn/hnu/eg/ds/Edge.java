@@ -1,11 +1,21 @@
 package cn.hnu.eg.ds;
 
+import cn.hnu.eg.Message.Message;
 import cn.hnu.eg.util.EGConstant;
 
 public class Edge {
 	private int s_id; // id of the source vertex
 	private int d_id; // id of the destination vertex
 	private double weight; // weight of the edge
+	private Message msg = null;
+
+	public Message getMessage() {
+		return msg;
+	}
+
+	public void setMessage(Message msg) {
+		this.msg = msg;
+	}
 
 	/**
 	 * initialize an edge
@@ -74,8 +84,7 @@ public class Edge {
 	 * */
 	@Override
 	public String toString() {
-		return s_id + EGConstant.idSperatorId + d_id + " "
-				+ EGConstant.idSperatorValue + weight;
+		return s_id + "->" + d_id + ":(" +weight+")" + " with message " +msg; 
 	}
 
 }

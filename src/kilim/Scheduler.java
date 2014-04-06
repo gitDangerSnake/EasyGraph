@@ -28,6 +28,7 @@ public class Scheduler {
 
     static {
         String s = System.getProperty("kilim.Scheduler.numThreads");
+        //System.out.println(s); 需要在系统中设置 kilim.Scheduler.numThreads
         if (s != null) {
             try {
                 defaultNumberThreads = Integer.parseInt(s);
@@ -35,17 +36,19 @@ public class Scheduler {
         }
         if (defaultNumberThreads == 0) {
             defaultNumberThreads = Runtime.getRuntime().availableProcessors();
+             //System.out.println(defaultNumberThreads); //打印本机上可以利用的核数 
         }
     }
     protected Scheduler() {}
     
-    public Scheduler(int numThreads) {
+    protected /*我修改了这里 将 public 换成了 protected */ Scheduler(int numThreads) {
         for (int i = 0; i < numThreads; i++) {
             WorkerThread wt = new WorkerThread(this);
             allThreads.add(wt);
             addWaitingThread(wt);
             wt.start();
         }
+        //System.out.println("....");
     }
     
     void addWaitingThread(WorkerThread wt) {

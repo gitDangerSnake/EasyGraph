@@ -1,23 +1,25 @@
 package cn.hnu.eg.sys;
 
-import cn.hnu.eg.base.Vertex;
-import cn.hnu.eg.ds.Graph;
+import cn.hnu.eg.base.BaseVertex;
 import cn.hnu.eg.util.EGConstant;
 
 public class Service {
 
-	public static void main(String[] args) {
-		Graph graph = new Graph(EGConstant.vertexClassName,EGConstant.GraphFilePath,EGConstant.idSperatorValue,EGConstant.idSperatorId);
-		
-		
-		System.out.println("now start vertices");
-		for (Integer i : graph.getChunk().asMap().keySet()) {
-			graph.getChunk().asMap().get(i).start();
-		}
-		
+	public static void main(String[] args) throws InterruptedException {
+		Graph graph = new Graph();
+		System.out.println(graph.num());
+		GraphLoader loader = new GraphLoader(graph,EGConstant.GraphFilePath,EGConstant.vertexClassName);
+		System.out.println(graph.num());
+		BaseVertex bv = null;
 		System.out.println("now start master");
-		Master.getMaster().start();
-		
+		Master m = Master.getMaster();
+		m.setLoader(loader);
+		m.start();
+		for(Integer i : graph.getvMap().keySet()){
+			bv = (BaseVertex)graph.getvMap().get(i);
+			bv.start();
+		}
+		Thread.sleep(1000);
 	}
 
 }

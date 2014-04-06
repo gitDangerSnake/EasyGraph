@@ -1,20 +1,25 @@
 package cn.hnu.eg.base;
 
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.io.Serializable;
 import java.util.List;
 import java.util.LinkedList;
 
-import cn.hnu.eg.sys.InferiorMessage;
 import cn.hnu.eg.sys.Master;
-import cn.hnu.eg.sys.Message;
-import cn.hnu.eg.sys.SupervisorMessage;
-import cn.hnu.eg.util.Rule;
+import cn.hnu.eg.util.EGConstant;
 import cn.hnu.eg.util.Signal;
+import cn.hnu.eg.util.SignalEvent;
+import cn.hnu.eg.util.SignalListener;
 import cn.hnu.eg.util.State;
 import cn.hnu.eg.Exceptions.IllegalDataException;
-import cn.hnu.eg.cache.Chunk;
+import cn.hnu.eg.Message.*;
 import cn.hnu.eg.ds.Edge;
-import kilim.ExitMsg;
 import kilim.Mailbox;
 import kilim.Pausable;
 import kilim.Task;
@@ -23,52 +28,38 @@ public abstract class BaseVertex extends Task implements Serializable {
 
 	private static final long serialVersionUID = -6236420676620350939L;
 
-	// 接收来自其他顶点的消息
-	private Mailbox<Message> mailbox = new Mailbox<Message>(100);
 	// 接收来自Master的控制信息
-	private Mailbox<Message> orders = new Mailbox<Message>(10);
-	// 退出消息
-	private Mailbox<ExitMsg> exitmb = new Mailbox<ExitMsg>();
-
+	private Mailbox<Signal> orders = new Mailbox<Signal>(5);
 	// 当前顶点的标识
 	private int id;
-
-	// 保存顶点在某次迭代上一次的值
-	private double old_val;
-
 	// 顶点当前的值
 	private double val;
-
+	
+	
+	private double old_val;
 	// 超级步
 	private int superstep = 0;
 
-	// 邻接表
-	private List<Edge> adjs = new LinkedList<Edge>();
+	public static int totalVertices = 0;
+
+	// 出边邻接表，入边邻接表
+	private List<Edge> outEdges = new LinkedList<Edge>();
+	private List<Edge> inEdges = new LinkedList<Edge>();
+
+	private SignalListener sl = Master.getMaster();
 
 	// 当前顶点的状态
 	private State currentstate = State.ACTIVE;
 
-	// 消息
-	private Message msg = null;
-
-	// 当前顶点所在的块
-	private Chunk<Integer, BaseVertex> chunk;
-
-	// .......
-	private StringBuffer sb = new StringBuffer();
-
 	/** getters / setters */
-	public Mailbox<Message> getMailbox() {
-		return mailbox;
+	public double getOld_val() {
+		return old_val;
 	}
 
-	public Mailbox<Message> getOrders() {
-		return orders;
+	public void setOld_val(double old_val) {
+		this.old_val = old_val;
 	}
 
-	public Mailbox<ExitMsg> getExitmb() {
-		return exitmb;
-	}
 
 	public int getId() {
 		return this.id;
@@ -79,8 +70,15 @@ public abstract class BaseVertex extends Task implements Serializable {
 	}
 
 	public void setVal(double val) {
-		this.old_val = this.val;
 		this.val = val;
+	}
+
+	public Mailbox<Signal> getOrders() {
+		return orders;
+	}
+
+	public void setOrders(Mailbox<Signal> orders) {
+		this.orders = orders;
 	}
 
 	public int getSuperstep() {
@@ -91,12 +89,20 @@ public abstract class BaseVertex extends Task implements Serializable {
 		this.superstep = s;
 	}
 
-	public List<Edge> getAdjs() {
-		return this.adjs;
+	public List<Edge> getOutBounds() {
+		return this.outEdges;
 	}
 
-	public void addEdge(Edge e) {
-		this.adjs.add(e);
+	public List<Edge> getInBounds() {
+		return this.inEdges;
+	}
+
+	public void addOutEdge(Edge e) {
+		this.outEdges.add(e);
+	}
+
+	public void addInEdge(Edge e) {
+		this.inEdges.add(e);
 	}
 
 	public State getCurrentstate() {
@@ -113,11 +119,12 @@ public abstract class BaseVertex extends Task implements Serializable {
 	public void init(int id, double val) {
 		this.id = id;
 		this.val = val;
-		this.old_val = this.val;
+		totalVertices++;
 	}
 
 	public void init(int id) {
 		this.id = id;
+		totalVertices++;
 	}
 
 	public void init(String str, String idSperatorId, String idSperatorValue,
@@ -132,7 +139,6 @@ public abstract class BaseVertex extends Task implements Serializable {
 			}
 			init(Integer.valueOf(currentContent[0]),
 					Double.valueOf(currentContent[1]));
-
 		} else {
 
 			if (Integer.valueOf(vcontent[0]) < 0)
@@ -158,85 +164,95 @@ public abstract class BaseVertex extends Task implements Serializable {
 				e = new Edge(this.id, Integer.valueOf(vcontent[i]));
 			}
 
-			addEdge(e);
+			addOutEdge(e);
 		}
+
+		totalVertices++;
+
 	}
 
-	// user need to implement this method , if user implements this method ,
-	// it's hard to control message passing , if you do n.ot want to implement
-	// this method , you can override the execute method which may be more hard
-	// to program correctly
-	public abstract void compute();
+	public abstract void compute(Message msg);
+
+	public abstract void sendMsgs();
+
+	public abstract void initComppute();
 
 	@Override
 	public void execute() throws Pausable {
-		SupervisorMessage msg = null;
-		boolean running = false;
-		msg = (SupervisorMessage) orders.get();
-		if (msg.isStart()) {
+		boolean busy = false;
+		Signal signal = orders.get();
+		// System.out.println(Thread.currentThread().getName() + signal);
+		if (signal == Signal.red) {
 			running = true;
-			send();
+			initComppute(); // 主要用来进行第一个超级步时的初始化
+			notifyMaster(Signal.green);
 		}
 
+		Message msg = null;
 		while (running) {
-			while (mailbox.hasMessage()) {
-				Object obj = orders.getnb(); // getnb() 非阻塞，返回消息或者null
-				if (obj != null) {
-					msg = (SupervisorMessage) obj;
-					if (msg.isDeath()) {
-						running = false;
-						break;
+			signal = orders.get();
+			if (signal == Signal.dark) {
+				running = false;
+				break;
+			} else if (signal == Signal.red) {
+				superstep++;
+				for (Edge e : inEdges) {
+					msg = e.getMessage();
+					e.setMessage(null);
+					if (msg != null) {
+						busy = true;
+						compute(msg);
 					}
 				}
-				compute();
+				writeSolution();
+				sendMsgs();
+				if (busy) {
+					busy = false;
+					notifyMaster(Signal.green);
+				} else {
+					notifyMaster(Signal.dark);
+				}
 			}
-			currentstate = State.HALT;
-			Master.getMaster().getMailbox().putnb(Signal.dark);
-			Master.getMaster().getStepbox().putnb(Signal.green);
 		}
 	}
-
-	public void send(Rule rule) throws Pausable {
-		switch (rule) {
-		case valuechange:
-			send();
-			break;
-		case outboundschange:
-			;
-			break;
-		case weightchange:
-			;
-			break;
-		}
-	}
-
-	// *** once value in this vertex changed , then send message to its adjs
-	public void generateMsg() {
-		this.msg = new InferiorMessage(currentstate, val);
-	}
-
-	public void send() throws Pausable {
-
-		generateMsg();
-		for (Edge e : adjs) {
-			int d_id = e.getD_id();
-			chunk.send(msg, d_id);
-		}
-	}
-
-	// *** once its outbounds changed , then send message to its adjs
-	// public void generateMsg()
 
 	public void writeSolution() {
-
+		String path = EGConstant.SolutionPath + superstep ;
+		File dir = new File(path);
+		if(dir.exists()){
+			File file = new File(dir,id+".dat");
+			System.out.println(file);
+			if(file.exists()) file.delete();
+			try {
+				if (file.createNewFile()) {
+					BufferedWriter bw;
+					try {
+						bw = new BufferedWriter(new FileWriter(file));
+						bw.write(id + ":" + val);
+						bw.close();
+					} catch (IOException e) {
+						e.printStackTrace();
+					}
+				}
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		}
 	}
 
-	public void notifyMaster(Signal s) {
-		Master.getMaster().getMailbox().putnb(s);
+	public void notifyMaster(Signal s) throws Pausable {
+		Master.getMaster().getSlot().put(s);
+
 	}
 
 	@Override
 	public String toString() {
-		return id + ":" + val;
+		StringBuffer sb = new StringBuffer(id + ":" + val + " ");
+		for (Edge e : outEdges) {
+			sb.append(e.toString()).append(" ");
+		}
+		return sb.toString();
+
 	}
+
 }
